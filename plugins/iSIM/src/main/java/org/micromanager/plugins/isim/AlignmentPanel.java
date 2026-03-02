@@ -94,18 +94,18 @@ public class AlignmentPanel extends JPanel {
 
       add(new JLabel("Offset X (px):"), "");
       offsetXSpinner_ = new JSpinner(new SpinnerNumberModel(
-            model_.getOffsetX(), -9999, 9999, 1));
+            model_.getOffsetX(), -9999.0, 9999.0, 0.1));
       offsetXSpinner_.addChangeListener(e -> {
-         model_.setOffsetX((Integer) offsetXSpinner_.getValue());
+         model_.setOffsetX((Double) offsetXSpinner_.getValue());
          repaintOverlay();
       });
       add(offsetXSpinner_, "width 80");
 
       add(new JLabel("Offset Y (px):"), "");
       offsetYSpinner_ = new JSpinner(new SpinnerNumberModel(
-            model_.getOffsetY(), -9999, 9999, 1));
+            model_.getOffsetY(), -9999.0, 9999.0, 0.1));
       offsetYSpinner_.addChangeListener(e -> {
-         model_.setOffsetY((Integer) offsetYSpinner_.getValue());
+         model_.setOffsetY((Double) offsetYSpinner_.getValue());
          repaintOverlay();
       });
       add(offsetYSpinner_, "width 80, wrap");

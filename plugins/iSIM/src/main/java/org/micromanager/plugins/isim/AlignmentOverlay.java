@@ -31,8 +31,8 @@ public class AlignmentOverlay extends AbstractOverlay {
    private List<double[][]> cachedLines_ = null; // each element: {{x1,y1},{x2,y2}}
    private double cacheAlpha_ = Double.NaN;
    private double cacheSpacing_ = Double.NaN;
-   private int cacheOffsetX_ = Integer.MIN_VALUE;
-   private int cacheOffsetY_ = Integer.MIN_VALUE;
+   private double cacheOffsetX_ = Double.NaN;
+   private double cacheOffsetY_ = Double.NaN;
    private int cacheImgW_ = -1;
    private int cacheImgH_ = -1;
 
@@ -112,15 +112,15 @@ public class AlignmentOverlay extends AbstractOverlay {
 
       double alpha = model_.getAngleRad();
       double spacingPx = model_.getSpacingPx();
-      int offsetX = model_.getOffsetX();
-      int offsetY = model_.getOffsetY();
+      double offsetX = model_.getOffsetX();
+      double offsetY = model_.getOffsetY();
 
       // Recompute image-space endpoints only when the geometry-defining inputs change.
       if (cachedLines_ == null
             || Double.compare(alpha, cacheAlpha_) != 0
             || Double.compare(spacingPx, cacheSpacing_) != 0
-            || offsetX != cacheOffsetX_
-            || offsetY != cacheOffsetY_
+            || Double.compare(offsetX, cacheOffsetX_) != 0
+            || Double.compare(offsetY, cacheOffsetY_) != 0
             || imageWidth != cacheImgW_
             || imageHeight != cacheImgH_) {
 
@@ -156,7 +156,7 @@ public class AlignmentOverlay extends AbstractOverlay {
     * @return list of line endpoint pairs, each element {{x1,y1},{x2,y2}}
     */
    private List<double[][]> computeLineEndpoints(
-         double alpha, double spacingPx, int offsetX, int offsetY,
+         double alpha, double spacingPx, double offsetX, double offsetY,
          int imageWidth, int imageHeight) {
 
       double nx = -Math.sin(alpha);

@@ -17,8 +17,8 @@ public class AlignmentModel {
 
    private static final double DEFAULT_ANGLE_DEG = -4.13;
    private static final double DEFAULT_SPACING_PX = 64.0;
-   private static final int DEFAULT_OFFSET_X = 0;
-   private static final int DEFAULT_OFFSET_Y = 0;
+   private static final double DEFAULT_OFFSET_X = 0.0;
+   private static final double DEFAULT_OFFSET_Y = 0.0;
    private static final boolean DEFAULT_DETECTION_ENABLED = false;
    private static final int DEFAULT_THRESHOLD = 500;
    private static final int DEFAULT_WINDOW_PX = 20;
@@ -28,8 +28,8 @@ public class AlignmentModel {
    private double angleDeg_;
    private double angleRad_;
    private double spacingPx_;
-   private int offsetX_;
-   private int offsetY_;
+   private double offsetX_;
+   private double offsetY_;
    private boolean detectionEnabled_;
    // Volatile: written from EDT (spinner listeners), read from detection thread.
    private volatile int threshold_;
@@ -40,8 +40,8 @@ public class AlignmentModel {
       angleDeg_ = settings_.getDouble(KEY_ANGLE_DEG, DEFAULT_ANGLE_DEG);
       angleRad_ = Math.toRadians(angleDeg_);
       spacingPx_ = settings_.getDouble(KEY_SPACING_PX, DEFAULT_SPACING_PX);
-      offsetX_ = settings_.getInteger(KEY_OFFSET_X, DEFAULT_OFFSET_X);
-      offsetY_ = settings_.getInteger(KEY_OFFSET_Y, DEFAULT_OFFSET_Y);
+      offsetX_ = settings_.getDouble(KEY_OFFSET_X, DEFAULT_OFFSET_X);
+      offsetY_ = settings_.getDouble(KEY_OFFSET_Y, DEFAULT_OFFSET_Y);
       detectionEnabled_ = settings_.getBoolean(KEY_DETECTION_ENABLED, DEFAULT_DETECTION_ENABLED);
       threshold_ = settings_.getInteger(KEY_THRESHOLD, DEFAULT_THRESHOLD);
       windowPx_ = settings_.getInteger(KEY_WINDOW_PX, DEFAULT_WINDOW_PX);
@@ -50,8 +50,8 @@ public class AlignmentModel {
    public void save() {
       settings_.putDouble(KEY_ANGLE_DEG, angleDeg_);
       settings_.putDouble(KEY_SPACING_PX, spacingPx_);
-      settings_.putInteger(KEY_OFFSET_X, offsetX_);
-      settings_.putInteger(KEY_OFFSET_Y, offsetY_);
+      settings_.putDouble(KEY_OFFSET_X, offsetX_);
+      settings_.putDouble(KEY_OFFSET_Y, offsetY_);
       settings_.putBoolean(KEY_DETECTION_ENABLED, detectionEnabled_);
       settings_.putInteger(KEY_THRESHOLD, threshold_);
       settings_.putInteger(KEY_WINDOW_PX, windowPx_);
@@ -78,19 +78,19 @@ public class AlignmentModel {
       spacingPx_ = spacingPx;
    }
 
-   public int getOffsetX() {
+   public double getOffsetX() {
       return offsetX_;
    }
 
-   public void setOffsetX(int offsetX) {
+   public void setOffsetX(double offsetX) {
       offsetX_ = offsetX;
    }
 
-   public int getOffsetY() {
+   public double getOffsetY() {
       return offsetY_;
    }
 
-   public void setOffsetY(int offsetY) {
+   public void setOffsetY(double offsetY) {
       offsetY_ = offsetY;
    }
 
