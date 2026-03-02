@@ -16,7 +16,7 @@ public class AlignmentModel {
    private static final String KEY_WINDOW_PX = "windowPx";
 
    private static final double DEFAULT_ANGLE_DEG = -4.13;
-   private static final int DEFAULT_SPACING_PX = 64;
+   private static final double DEFAULT_SPACING_PX = 64.0;
    private static final int DEFAULT_OFFSET_X = 0;
    private static final int DEFAULT_OFFSET_Y = 0;
    private static final boolean DEFAULT_DETECTION_ENABLED = false;
@@ -27,7 +27,7 @@ public class AlignmentModel {
 
    private double angleDeg_;
    private double angleRad_;
-   private int spacingPx_;
+   private double spacingPx_;
    private int offsetX_;
    private int offsetY_;
    private boolean detectionEnabled_;
@@ -39,7 +39,7 @@ public class AlignmentModel {
       settings_ = settings;
       angleDeg_ = settings_.getDouble(KEY_ANGLE_DEG, DEFAULT_ANGLE_DEG);
       angleRad_ = Math.toRadians(angleDeg_);
-      spacingPx_ = settings_.getInteger(KEY_SPACING_PX, DEFAULT_SPACING_PX);
+      spacingPx_ = settings_.getDouble(KEY_SPACING_PX, DEFAULT_SPACING_PX);
       offsetX_ = settings_.getInteger(KEY_OFFSET_X, DEFAULT_OFFSET_X);
       offsetY_ = settings_.getInteger(KEY_OFFSET_Y, DEFAULT_OFFSET_Y);
       detectionEnabled_ = settings_.getBoolean(KEY_DETECTION_ENABLED, DEFAULT_DETECTION_ENABLED);
@@ -49,7 +49,7 @@ public class AlignmentModel {
 
    public void save() {
       settings_.putDouble(KEY_ANGLE_DEG, angleDeg_);
-      settings_.putInteger(KEY_SPACING_PX, spacingPx_);
+      settings_.putDouble(KEY_SPACING_PX, spacingPx_);
       settings_.putInteger(KEY_OFFSET_X, offsetX_);
       settings_.putInteger(KEY_OFFSET_Y, offsetY_);
       settings_.putBoolean(KEY_DETECTION_ENABLED, detectionEnabled_);
@@ -70,11 +70,11 @@ public class AlignmentModel {
       return angleRad_;
    }
 
-   public int getSpacingPx() {
+   public double getSpacingPx() {
       return spacingPx_;
    }
 
-   public void setSpacingPx(int spacingPx) {
+   public void setSpacingPx(double spacingPx) {
       spacingPx_ = spacingPx;
    }
 
