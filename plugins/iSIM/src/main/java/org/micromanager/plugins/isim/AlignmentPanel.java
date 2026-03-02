@@ -85,9 +85,9 @@ public class AlignmentPanel extends JPanel {
 
       add(new JLabel("Spacing (px):"), "");
       spacingSpinner_ = new JSpinner(new SpinnerNumberModel(
-            model_.getSpacingPx(), 1, 9999, 1));
+            model_.getSpacingPx(), 0.1, 9999.0, 0.1));
       spacingSpinner_.addChangeListener(e -> {
-         model_.setSpacingPx((Integer) spacingSpinner_.getValue());
+         model_.setSpacingPx((Double) spacingSpinner_.getValue());
          repaintOverlay();
       });
       add(spacingSpinner_, "width 80, wrap");
