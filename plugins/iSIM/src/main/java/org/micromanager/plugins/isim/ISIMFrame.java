@@ -32,7 +32,9 @@ public class ISIMFrame extends JFrame {
             getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       AlignmentModel model = new AlignmentModel(
-            studio_.profile().getSettings(AlignmentModel.class));
+            studio_.profile().getSettings(AlignmentModel.class),
+            (int) studio_.core().getImageWidth(),
+            (int) studio_.core().getImageHeight());
       alignmentPanel_ = new AlignmentPanel(studio_, model, this, deviceLabel);
       waveformPanel_ = new WaveformPanel(studio_, deviceLabel);
 

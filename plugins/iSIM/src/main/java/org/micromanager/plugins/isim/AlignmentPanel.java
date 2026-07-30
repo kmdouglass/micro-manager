@@ -26,7 +26,7 @@ import org.micromanager.events.PropertyChangedEvent;
 /**
  * Panel implementing alignment mode controls:
  * - Enter/exit alignment mode (adds reference-line overlay to the live view)
- * - Reference line parameters (angle, spacing, offset)
+ * - Reference line parameters (angle, per-line offset)
  * - Optional automatic spot detection
  */
 public class AlignmentPanel extends JPanel {
@@ -51,9 +51,8 @@ public class AlignmentPanel extends JPanel {
    // Controls
    private final JButton alignmentModeButton_;
    private final JSpinner angleSpinner_;
-   private final JSpinner spacingSpinner_;
-   private final JSpinner offsetXSpinner_;
-   private final JSpinner offsetYSpinner_;
+   private final JSpinner offsetASpinner_;
+   private final JSpinner offsetBSpinner_;
    private final JCheckBox detectionCheckBox_;
    private final JSpinner thresholdSpinner_;
    private final JSpinner windowSpinner_;
@@ -83,32 +82,23 @@ public class AlignmentPanel extends JPanel {
       });
       add(angleSpinner_, "width 80, wrap");
 
-      add(new JLabel("Spacing (px):"), "");
-      spacingSpinner_ = new JSpinner(new SpinnerNumberModel(
-            model_.getSpacingPx(), 0.1, 9999.0, 0.1));
-      spacingSpinner_.addChangeListener(e -> {
-         model_.setSpacingPx((Double) spacingSpinner_.getValue());
+      add(new JLabel("Line 1 Offset (px):"), "");
+      offsetASpinner_ = new JSpinner(new SpinnerNumberModel(
+            model_.getOffsetA(), -9999.0, 9999.0, 0.1));
+      offsetASpinner_.addChangeListener(e -> {
+         model_.setOffsetA((Double) offsetASpinner_.getValue());
          repaintOverlay();
       });
-      add(spacingSpinner_, "width 80, wrap");
+      add(offsetASpinner_, "width 80, wrap");
 
-      add(new JLabel("Offset X (px):"), "");
-      offsetXSpinner_ = new JSpinner(new SpinnerNumberModel(
-            model_.getOffsetX(), -9999.0, 9999.0, 0.1));
-      offsetXSpinner_.addChangeListener(e -> {
-         model_.setOffsetX((Double) offsetXSpinner_.getValue());
+      add(new JLabel("Line 2 Offset (px):"), "");
+      offsetBSpinner_ = new JSpinner(new SpinnerNumberModel(
+            model_.getOffsetB(), -9999.0, 9999.0, 0.1));
+      offsetBSpinner_.addChangeListener(e -> {
+         model_.setOffsetB((Double) offsetBSpinner_.getValue());
          repaintOverlay();
       });
-      add(offsetXSpinner_, "width 80");
-
-      add(new JLabel("Offset Y (px):"), "");
-      offsetYSpinner_ = new JSpinner(new SpinnerNumberModel(
-            model_.getOffsetY(), -9999.0, 9999.0, 0.1));
-      offsetYSpinner_.addChangeListener(e -> {
-         model_.setOffsetY((Double) offsetYSpinner_.getValue());
-         repaintOverlay();
-      });
-      add(offsetYSpinner_, "width 80, wrap");
+      add(offsetBSpinner_, "width 80, wrap");
 
       // Spot detection section
       add(new JLabel("Spot Detection"), "span, gaptop 8, wrap");

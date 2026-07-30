@@ -14,7 +14,7 @@ import org.micromanager.display.overlay.AbstractOverlay;
 
 /**
  * Draws the iSIM alignment overlay on the live view.
- * - Cyan diagonal reference lines representing the expected microlens/pinhole grid
+ * - A cyan crosshair: one reference line and a second line perpendicular to it
  * - Red cross markers at detected spot positions
  */
 public class AlignmentOverlay extends AbstractOverlay {
@@ -26,13 +26,12 @@ public class AlignmentOverlay extends AbstractOverlay {
    private final AlignmentModel model_;
 
    // Cache for reference-line endpoints in image coordinates.
-   // The cache key is (alpha, spacingPx, offsetX, offsetY, imageWidth, imageHeight).
+   // The cache key is (alpha, offsetA, offsetB, imageWidth, imageHeight).
    // All reads and writes occur on the EDT.
    private List<double[][]> cachedLines_ = null; // each element: {{x1,y1},{x2,y2}}
    private double cacheAlpha_ = Double.NaN;
-   private double cacheSpacing_ = Double.NaN;
-   private double cacheOffsetX_ = Double.NaN;
-   private double cacheOffsetY_ = Double.NaN;
+   private double cacheOffsetA_ = Double.NaN;
+   private double cacheOffsetB_ = Double.NaN;
    private int cacheImgW_ = -1;
    private int cacheImgH_ = -1;
 
@@ -95,7 +94,7 @@ public class AlignmentOverlay extends AbstractOverlay {
    }
 
    /**
-    * Draws parallel diagonal cyan lines across the image.
+    * Draws the cyan crosshair (two perpendicular lines) across the image.
     *
     * <p>Line endpoints in image coordinates are cached by model parameters and image
     * dimensions, since these rarely change between frames. Only the final screen-coordinate
@@ -111,25 +110,21 @@ public class AlignmentOverlay extends AbstractOverlay {
          double scaleY) {
 
       double alpha = model_.getAngleRad();
-      double spacingPx = model_.getSpacingPx();
-      double offsetX = model_.getOffsetX();
-      double offsetY = model_.getOffsetY();
+      double offsetA = model_.getOffsetA();
+      double offsetB = model_.getOffsetB();
 
       // Recompute image-space endpoints only when the geometry-defining inputs change.
       if (cachedLines_ == null
             || Double.compare(alpha, cacheAlpha_) != 0
-            || Double.compare(spacingPx, cacheSpacing_) != 0
-            || Double.compare(offsetX, cacheOffsetX_) != 0
-            || Double.compare(offsetY, cacheOffsetY_) != 0
+            || Double.compare(offsetA, cacheOffsetA_) != 0
+            || Double.compare(offsetB, cacheOffsetB_) != 0
             || imageWidth != cacheImgW_
             || imageHeight != cacheImgH_) {
 
-         cachedLines_ = computeLineEndpoints(alpha, spacingPx, offsetX, offsetY,
-               imageWidth, imageHeight);
+         cachedLines_ = computeLineEndpoints(alpha, offsetA, offsetB, imageWidth, imageHeight);
          cacheAlpha_ = alpha;
-         cacheSpacing_ = spacingPx;
-         cacheOffsetX_ = offsetX;
-         cacheOffsetY_ = offsetY;
+         cacheOffsetA_ = offsetA;
+         cacheOffsetB_ = offsetB;
          cacheImgW_ = imageWidth;
          cacheImgH_ = imageHeight;
       }
@@ -145,71 +140,64 @@ public class AlignmentOverlay extends AbstractOverlay {
    }
 
    /**
-    * Computes image-space endpoints for all reference lines that cross the image.
+    * Computes image-space endpoints for the two crosshair lines that cross the image.
     *
-    * <p>Lines are defined in image coordinates by the equation:
-    *   x * nx + y * ny = d0 + k * spacingPx
-    * where (nx, ny) = (-sin(alpha), cos(alpha)) is the line normal and d0 is
-    * the offset from the origin. For each k we intersect the line with all four
-    * image edges and collect the two valid intersection points.
+    * <p>Each line is defined in image coordinates by the equation:
+    *   x * nx + y * ny = offset
+    * where (nx, ny) = (-sin(angle), cos(angle)) is the line normal. Line A uses
+    * {@code alpha} and {@code offsetA}; line B is perpendicular to line A (angle
+    * {@code alpha + PI/2}) and uses {@code offsetB}. Each line is intersected with
+    * all four image edges to find its two endpoints.
     *
-    * @return list of line endpoint pairs, each element {{x1,y1},{x2,y2}}
+    * @return list of line endpoint pairs, each element {{x1,y1},{x2,y2}}; a line is
+    *     omitted if it does not cross the image (fewer than two edge intersections)
     */
    private List<double[][]> computeLineEndpoints(
-         double alpha, double spacingPx, double offsetX, double offsetY,
+         double alpha, double offsetA, double offsetB,
          int imageWidth, int imageHeight) {
 
-      double nx = -Math.sin(alpha);
-      double ny = Math.cos(alpha);
-      double d0 = offsetX * nx + offsetY * ny;
-
-      // Range of k: enough to cover the entire image diagonal.
-      // The projection of image corners onto the normal gives the min/max d.
-      double dMin = 0;
-      double dMax = 0;
-      double[] cornerDs = {
-         imageWidth * nx,
-         imageHeight * ny,
-         imageWidth * nx + imageHeight * ny
-      };
-      for (double d : cornerDs) {
-         if (d < dMin) {
-            dMin = d;
-         }
-         if (d > dMax) {
-            dMax = d;
-         }
+      List<double[][]> lines = new ArrayList<>(2);
+      double[][] lineA = computeSingleLineEndpoints(alpha, offsetA, imageWidth, imageHeight);
+      if (lineA != null) {
+         lines.add(lineA);
       }
-
-      int kMin = (int) Math.floor((dMin - d0) / spacingPx) - 1;
-      int kMax = (int) Math.ceil((dMax - d0) / spacingPx) + 1;
-
-      List<double[][]> lines = new ArrayList<>(kMax - kMin + 1);
-
-      for (int k = kMin; k <= kMax; k++) {
-         double lineD = d0 + k * spacingPx;
-
-         // Intersect line (x*nx + y*ny = lineD) with the four image edges.
-         List<double[]> intersections = new ArrayList<>(4);
-         addEdgeIntersection(intersections, nx, ny, lineD,
-               0, 0, imageWidth, 0);                      // top edge: y=0
-         addEdgeIntersection(intersections, nx, ny, lineD,
-               0, imageHeight, imageWidth, imageHeight);   // bottom edge: y=H
-         addEdgeIntersection(intersections, nx, ny, lineD,
-               0, 0, 0, imageHeight);                     // left edge: x=0
-         addEdgeIntersection(intersections, nx, ny, lineD,
-               imageWidth, 0, imageWidth, imageHeight);    // right edge: x=W
-
-         if (intersections.size() < 2) {
-            continue;
-         }
-
-         // Use the first and last intersection points to get a consistent pair.
-         double[] p1 = intersections.get(0);
-         double[] p2 = intersections.get(intersections.size() - 1);
-         lines.add(new double[][]{{p1[0], p1[1]}, {p2[0], p2[1]}});
+      double[][] lineB = computeSingleLineEndpoints(
+            alpha + Math.PI / 2, offsetB, imageWidth, imageHeight);
+      if (lineB != null) {
+         lines.add(lineB);
       }
       return lines;
+   }
+
+   /**
+    * Computes the image-space endpoints of a single line of the given angle and offset,
+    * or {@code null} if the line does not cross the image.
+    */
+   private double[][] computeSingleLineEndpoints(
+         double angle, double offset, int imageWidth, int imageHeight) {
+
+      double nx = -Math.sin(angle);
+      double ny = Math.cos(angle);
+
+      // Intersect line (x*nx + y*ny = offset) with the four image edges.
+      List<double[]> intersections = new ArrayList<>(4);
+      addEdgeIntersection(intersections, nx, ny, offset,
+            0, 0, imageWidth, 0);                      // top edge: y=0
+      addEdgeIntersection(intersections, nx, ny, offset,
+            0, imageHeight, imageWidth, imageHeight);   // bottom edge: y=H
+      addEdgeIntersection(intersections, nx, ny, offset,
+            0, 0, 0, imageHeight);                     // left edge: x=0
+      addEdgeIntersection(intersections, nx, ny, offset,
+            imageWidth, 0, imageWidth, imageHeight);    // right edge: x=W
+
+      if (intersections.size() < 2) {
+         return null;
+      }
+
+      // Use the first and last intersection points to get a consistent pair.
+      double[] p1 = intersections.get(0);
+      double[] p2 = intersections.get(intersections.size() - 1);
+      return new double[][]{{p1[0], p1[1]}, {p2[0], p2[1]}};
    }
 
    /**

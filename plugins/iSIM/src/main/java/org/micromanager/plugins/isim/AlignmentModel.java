@@ -8,17 +8,13 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  */
 public class AlignmentModel {
    private static final String KEY_ANGLE_DEG = "angleDeg";
-   private static final String KEY_SPACING_PX = "spacingPx";
-   private static final String KEY_OFFSET_X = "offsetX";
-   private static final String KEY_OFFSET_Y = "offsetY";
+   private static final String KEY_OFFSET_A = "offsetLineAPx";
+   private static final String KEY_OFFSET_B = "offsetLineBPx";
    private static final String KEY_DETECTION_ENABLED = "detectionEnabled";
    private static final String KEY_THRESHOLD = "threshold";
    private static final String KEY_WINDOW_PX = "windowPx";
 
    private static final double DEFAULT_ANGLE_DEG = -4.13;
-   private static final double DEFAULT_SPACING_PX = 64.0;
-   private static final double DEFAULT_OFFSET_X = 0.0;
-   private static final double DEFAULT_OFFSET_Y = 0.0;
    private static final boolean DEFAULT_DETECTION_ENABLED = false;
    private static final int DEFAULT_THRESHOLD = 500;
    private static final int DEFAULT_WINDOW_PX = 20;
@@ -27,31 +23,53 @@ public class AlignmentModel {
 
    private double angleDeg_;
    private double angleRad_;
-   private double spacingPx_;
-   private double offsetX_;
-   private double offsetY_;
+   private double offsetA_;
+   private double offsetB_;
    private boolean detectionEnabled_;
    // Volatile: written from EDT (spinner listeners), read from detection thread.
    private volatile int threshold_;
    private volatile int windowPx_;
 
-   public AlignmentModel(MutablePropertyMapView settings) {
+   /**
+    * Constructs the alignment model, loading persisted settings.
+    *
+    * @param settings persisted settings view
+    * @param defaultImageWidth current camera image width in pixels, used only to compute
+    *     the center-crossing default offset the first time each line's offset is read
+    *     (i.e. when no value has been persisted yet)
+    * @param defaultImageHeight current camera image height in pixels, used only for the
+    *     same first-time default computation
+    */
+   public AlignmentModel(MutablePropertyMapView settings,
+         int defaultImageWidth, int defaultImageHeight) {
       settings_ = settings;
       angleDeg_ = settings_.getDouble(KEY_ANGLE_DEG, DEFAULT_ANGLE_DEG);
       angleRad_ = Math.toRadians(angleDeg_);
-      spacingPx_ = settings_.getDouble(KEY_SPACING_PX, DEFAULT_SPACING_PX);
-      offsetX_ = settings_.getDouble(KEY_OFFSET_X, DEFAULT_OFFSET_X);
-      offsetY_ = settings_.getDouble(KEY_OFFSET_Y, DEFAULT_OFFSET_Y);
+      double defaultOffsetA =
+            centerOffsetForAngle(angleRad_, defaultImageWidth, defaultImageHeight);
+      offsetA_ = settings_.getDouble(KEY_OFFSET_A, defaultOffsetA);
+      double defaultOffsetB =
+            centerOffsetForAngle(angleRad_ + Math.PI / 2, defaultImageWidth, defaultImageHeight);
+      offsetB_ = settings_.getDouble(KEY_OFFSET_B, defaultOffsetB);
       detectionEnabled_ = settings_.getBoolean(KEY_DETECTION_ENABLED, DEFAULT_DETECTION_ENABLED);
       threshold_ = settings_.getInteger(KEY_THRESHOLD, DEFAULT_THRESHOLD);
       windowPx_ = settings_.getInteger(KEY_WINDOW_PX, DEFAULT_WINDOW_PX);
    }
 
+   /**
+    * Returns the perpendicular distance from the image origin to the line at the given
+    * angle that passes through the center of an image of the given size.
+    */
+   private static double centerOffsetForAngle(double angleRad, int imageWidth, int imageHeight) {
+      double nx = -Math.sin(angleRad);
+      double ny = Math.cos(angleRad);
+      return (imageWidth / 2.0) * nx + (imageHeight / 2.0) * ny;
+   }
+
    public void save() {
       settings_.putDouble(KEY_ANGLE_DEG, angleDeg_);
-      settings_.putDouble(KEY_SPACING_PX, spacingPx_);
-      settings_.putDouble(KEY_OFFSET_X, offsetX_);
-      settings_.putDouble(KEY_OFFSET_Y, offsetY_);
+      settings_.putDouble(KEY_OFFSET_A, offsetA_);
+      settings_.putDouble(KEY_OFFSET_B, offsetB_);
       settings_.putBoolean(KEY_DETECTION_ENABLED, detectionEnabled_);
       settings_.putInteger(KEY_THRESHOLD, threshold_);
       settings_.putInteger(KEY_WINDOW_PX, windowPx_);
@@ -70,28 +88,20 @@ public class AlignmentModel {
       return angleRad_;
    }
 
-   public double getSpacingPx() {
-      return spacingPx_;
+   public double getOffsetA() {
+      return offsetA_;
    }
 
-   public void setSpacingPx(double spacingPx) {
-      spacingPx_ = spacingPx;
+   public void setOffsetA(double offsetA) {
+      offsetA_ = offsetA;
    }
 
-   public double getOffsetX() {
-      return offsetX_;
+   public double getOffsetB() {
+      return offsetB_;
    }
 
-   public void setOffsetX(double offsetX) {
-      offsetX_ = offsetX;
-   }
-
-   public double getOffsetY() {
-      return offsetY_;
-   }
-
-   public void setOffsetY(double offsetY) {
-      offsetY_ = offsetY;
+   public void setOffsetB(double offsetB) {
+      offsetB_ = offsetB;
    }
 
    public boolean isDetectionEnabled() {
